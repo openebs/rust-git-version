@@ -23,12 +23,11 @@ macro_rules! error {
 }
 
 fn canonicalize_path(path: &Path) -> syn::Result<String> {
-	Ok(path
-		.canonicalize()
-		.map_err(|e| error!("failed to canonicalize {}: {}", path.display(), e))?
+	path.canonicalize()
+		.map_err(|e| error!("failed to canonicalize {}: {e}", path.display()))?
 		.into_os_string()
 		.into_string()
-		.map_err(|file| error!("invalid UTF-8 in path to {}", PathBuf::from(file).display()))?)
+		.map_err(|file| error!("invalid UTF-8 in path to {}", PathBuf::from(file).display()))
 }
 
 /// Create a token stream representing dependencies on the git state.
@@ -39,10 +38,7 @@ fn git_dependencies(deps: Vec<String>) -> syn::Result<TokenStream2> {
 		.iter()
 		.flat_map(|file| {
 			canonicalize_path(&git_dir.join(file)).map(Some).unwrap_or_else(|e| {
-				eprintln!(
-					"Failed to add dependency on the git state: {}. Git state changes might not trigger a rebuild.",
-					e
-				);
+				eprintln!("Failed to add dependency on the git state: {e}. Git state changes might not trigger a rebuild.");
 				None
 			})
 		})
